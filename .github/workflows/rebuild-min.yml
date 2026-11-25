@@ -1,0 +1,96 @@
+name: FFmpegKit 8.1.2 min - isolated rebuild
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: 'baseline or source-modified (version marker)'
+        required: true
+        default: baseline
+        type: choice
+        options:
+          - baseline
+          - source-modified
+permissions:
+  contents: read
+jobs:
+  rebuild:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    env:
+      KIT_COMMIT: e15206ec7b29aff45853571f98308570166f2dca
+      FFMPEG_COMMIT: 38b88335f99e76ed89ff3c93f877fdefce736c13
+      NDK_REVISION: '27.2.12479018'
+      BUILD_VARIANT: ${{ inputs.variant }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Disk and toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          df -h "$GITHUB_WORKSPACE" "$ANDROID_HOME"
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake libtool pkg-config curl git doxygen nasm cmake gcc gperf texinfo yasm bison autogen wget autopoint meson ninja-build ragel groff gtk-doc-tools libtasn1-bin
+          python3 -m pip install --upgrade meson
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          "$sdkmanager" --install "platforms;android-33" "build-tools;33.0.2" "ndk;$NDK_REVISION"
+          ndk="$ANDROID_HOME/ndk/$NDK_REVISION"
+          grep -E 'Pkg.Revision' "$ndk/source.properties"
+          echo "ANDROID_NDK_ROOT=$ndk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+          df -h "$GITHUB_WORKSPACE" "$ANDROID_HOME"
+      - name: Checkout verified source revisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          git init upstream
+          git -C upstream remote add origin https://github.com/maitrungduc1410/ffmpeg-kit.git
+          git -C upstream fetch --depth 1 origin refs/tags/android-8.1.2:refs/tags/android-8.1.2
+          git -C upstream checkout --detach android-8.1.2
+          test "$(git -C upstream rev-parse HEAD)" = "$KIT_COMMIT"
+          actual=$(git ls-remote https://github.com/arthenica/FFmpeg.git 'refs/tags/n8.1.2^{}' | awk '{print $1}')
+          if [[ -z "$actual" ]]; then actual=$(git ls-remote https://github.com/arthenica/FFmpeg.git refs/tags/n8.1.2 | awk '{print $1}'); fi
+          test "$actual" = "$FFMPEG_COMMIT"
+          printf 'FFmpegKit=%s\nFFmpeg=%s\nvariant=%s\n' "$KIT_COMMIT" "$FFMPEG_COMMIT" "$BUILD_VARIANT" > evidence/revisions.txt
+          if [[ "$BUILD_VARIANT" == source-modified ]]; then
+            python3 scripts/prepare-marker.py upstream/scripts/android/ffmpeg.sh
+            git -C upstream diff -- scripts/android/ffmpeg.sh > evidence/test-build-script.patch
+          fi
+      - name: Build only min variant (no Maven publication)
+        shell: bash
+        working-directory: upstream
+        run: |
+          set -euo pipefail
+          ./android.sh --enable-android-media-codec --enable-android-zlib --disable-arm-v7a --disable-x86 --disable-x86-64
+      - name: Inspect AAR and source changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream/src/ffmpeg rev-parse HEAD)" = "$FFMPEG_COMMIT"
+          git -C upstream/src/ffmpeg diff HEAD -- libavformat libavutil > evidence/ffmpeg-build-source-changes.patch
+          git -C upstream diff HEAD -- android/ffmpeg-kit-android-lib/src/main/cpp scripts/android/ffmpeg.sh > evidence/kit-build-source-changes.patch
+          python3 scripts/audit-aar.py upstream/prebuilt/bundle-android-aar evidence "$BUILD_VARIANT"
+      - name: Preserve available logs and toolchain information
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p evidence
+          if [[ -f upstream/build.log ]]; then cp upstream/build.log evidence/build.log; tail -n 100 upstream/build.log; fi
+          for f in upstream/src/ffmpeg/ffbuild/config.log upstream/src/ffmpeg/config.h upstream/src/ffmpeg/ffbuild/config.mak; do
+            if [[ -f "$f" ]]; then cp "$f" evidence/; fi
+          done
+          { df -h; java -version; uname -a; } > evidence/environment.txt 2>&1
+      - name: Store test artifacts and evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ffmpegkit-min-${{ inputs.variant }}-${{ github.run_id }}
+          path: evidence/
+          retention-days: 30
+          if-no-files-found: error
