@@ -1,0 +1,20 @@
+{
+  "arm64-v8a/libavcodec.so": "a01398fde2967e09ba8c01a578094b06fc72273f7c82a02f13e1bf2896afae83",
+  "arm64-v8a/libavdevice.so": "5c0b48a905ec441d287a25f12b39b52767ac1d3f1f4ee070139ad2d675581a89",
+  "arm64-v8a/libavfilter.so": "7ced114101825ffcc8d2af8e148f6ab6a049471d2c9482fd02a0f570b54eab5d",
+  "arm64-v8a/libavformat.so": "bedacbc7941aaf3cacb42b032364a34986ae1cda9dc015b2e8d95115753e6e91",
+  "arm64-v8a/libavutil.so": "bc1f7ee2deea71d9b4b30355ff0ba5e98deeddd0708e098915f7dd238245e97a",
+  "arm64-v8a/libffmpegkit.so": "2e072a95cc86a5a444e510bf87fb8002aa9254b170d8aaf31b835e53a86f8576",
+  "arm64-v8a/libffmpegkit_abidetect.so": "1722b8984da678d38f47ea48250a8a2b1773e62accef6cf9c649a91be6e9bd76",
+  "arm64-v8a/libswresample.so": "427f5caffc4dfef2df984dbf89652bdd62acfb534e3da0208c0b825dde56f6de",
+  "arm64-v8a/libswscale.so": "9ab3f3fbb376aca524b9a7c2a73046064738c0396bad423f7ab79539bb948208",
+  "armeabi-v7a/libavcodec_neon.so": "9af343baa3a8b7e185d6d410ace5efc85c48362b0ca51ca60027b109f66529f0",
+  "armeabi-v7a/libavdevice_neon.so": "20fbb4d6a950d23382246a8a77f7951be06e5f729c43e46ef20191ad805d5f83",
+  "armeabi-v7a/libavfilter_neon.so": "c0f1c64c875c26f618039d0697de5dfd5e4b9e04a804f710fea4c7e7a51fcc51",
+  "armeabi-v7a/libavformat_neon.so": "90c116da2a08966c13ab149d8081c27566b6902c4ea41bc4606ccbc7a9afc92a",
+  "armeabi-v7a/libavutil_neon.so": "6fdd0c3f13f89c018da46fbf68dc4b20867cd777b51a8682d30ef2485af8ad30",
+  "armeabi-v7a/libffmpegkit_abidetect.so": "69e9ea9a2acd001d83023b14727187d8352581df2948131c74180cad1522561a",
+  "armeabi-v7a/libffmpegkit_armv7a_neon.so": "ec461b7ba9300af6d471b915da7bf9f4232d39a00346c98f9367e1207e6f1018",
+  "armeabi-v7a/libswresample_neon.so": "c6b0bcd629e4679a7c12b1838ee761c16f1a82498a0fd824a81d62b6d5c50e53",
+  "armeabi-v7a/libswscale_neon.so": "ec8d2845163c2e6a7f4bb76a97a8d232f60976415cde85da78f8faa20cafc78f"
+}
